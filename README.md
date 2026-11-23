@@ -222,7 +222,7 @@ deploy/
   sql/          schema + 容量分析查询
 docs/
   architecture.md  SLO.md  CAPACITY.md
-  sop/            三份操作流程
+  sop/            四份操作流程
   postmortem/     四份故障复盘
   decisions/      四份 ADR
 scripts/
@@ -262,6 +262,6 @@ scripts/
 - [架构说明](docs/architecture.md)
 - [SLO 与错误预算](docs/SLO.md)
 - [容量规划方法与结论](docs/CAPACITY.md)
-- SOP：[发布](docs/sop/SOP-01-deploy.md) / [告警响应](docs/sop/SOP-02-alert.md) / [WAF 变更](docs/sop/SOP-03-waf-change.md)
+- SOP：[发布](docs/sop/SOP-01-deploy.md) / [告警响应](docs/sop/SOP-02-alert.md) / [WAF 变更](docs/sop/SOP-03-waf-change.md) / [主机加固](docs/sop/SOP-04-host-hardening.md)
 - 复盘：[WAF 参数规则全量漏拦](docs/postmortem/PM-001-waf-bypass.md) / [控制台把自己锁在门外](docs/postmortem/PM-002-waf-lockout.md) / [vmalert 无限重启](docs/postmortem/PM-003-vmalert-restart.md) / [控制台样式全丢](docs/postmortem/PM-004-upstream-mixing.md)
 - ADR：[状态存储](docs/decisions/ADR-001-storage.md) / [告警规则双引擎](docs/decisions/ADR-002-alert-rules.md) / [指标分链路](docs/decisions/ADR-003-metrics-split.md) / [WAF 方案](docs/decisions/ADR-004-waf.md)
