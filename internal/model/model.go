@@ -30,14 +30,21 @@ type Asset struct {
 
 // Service 是网关后面的一个业务服务。
 type Service struct {
-	Name       string   `json:"name"`
-	Domain     string   `json:"domain"`
-	Upstreams  []string `json:"upstreams"`
-	HealthPath string   `json:"healthPath"`
-	Owner      string   `json:"owner"`
-	Env        string   `json:"env"`
-	Version    string   `json:"version"`
-	UpdatedAt  int64    `json:"updatedAt"`
+	Name      string   `json:"name"`
+	Domain    string   `json:"domain"`
+	Upstreams []string `json:"upstreams"`
+	// Prefix 是这个服务在网关上的挂载路径（如 "/" 或 "/ops/"）。
+	// 必须显式声明：早期版本靠"把所有 upstream 合并成一个池子"来省事，
+	// 结果 Nginx 轮询到了错误的应用程序上，见 PM-004。
+	Prefix string `json:"prefix,omitempty"`
+	// SkipWAF 让这条路由绕过 auth_request。控制台必须绕过：
+	// WAF 规则写错时，运维得还有一条远程自救的路。
+	SkipWAF    bool   `json:"skipWaf,omitempty"`
+	HealthPath string `json:"healthPath"`
+	Owner      string `json:"owner"`
+	Env        string `json:"env"`
+	Version    string `json:"version"`
+	UpdatedAt  int64  `json:"updatedAt"`
 }
 
 // Sample 是指标的一个采样点。

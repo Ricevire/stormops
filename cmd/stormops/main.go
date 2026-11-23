@@ -93,6 +93,35 @@ func main() {
 	api := httpapi.New(cfg, st, dep)
 	httpapi.Version = version
 
+	// 路由信息回填。
+	//
+	// Prefix / SkipWAF / Upstreams 属于"部署事实"，真相源是配置文件；
+	// 而状态文件里存的是历史快照，可能是加这些字段之前写下的。
+	// 不做这一步，升级后网关会少生成路由 —— 站点直接 404，
+	// 但控制台里服务台账看起来一切正常，排查会绕很远。
+	// 按服务名对齐，只覆盖路由相关字段，不动运行态数据。
+	st.Update(func(s *model.State) {
+		for i := range s.Services {
+			for _, c := range cfg.Services {
+				if c.Name != s.Services[i].Name {
+					continue
+				}
+				// 配置里没写前缀就不要覆盖：留空会被当成"未声明"，
+				// 而不是当成"改回根路径"，避免把已有路由清掉。
+				if c.Prefix != "" {
+					s.Services[i].Prefix = c.Prefix
+				}
+				s.Services[i].SkipWAF = c.SkipWAF
+				if c.Domain != "" {
+					s.Services[i].Domain = c.Domain
+				}
+				if len(c.Upstreams) > 0 {
+					s.Services[i].Upstreams = c.Upstreams
+				}
+			}
+		}
+	})
+
 	srv := &http.Server{
 		Addr:              cfg.Listen,
 		Handler:           api.Handler(),

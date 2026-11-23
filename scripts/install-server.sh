@@ -59,17 +59,29 @@ su - postgres -c "psql -q -d stormops -c \"
 su - postgres -c "psql -q -d stormops -c 'GRANT USAGE ON SCHEMA ops TO stormops_ro'"
 su - postgres -c "psql -q -d stormops -c 'GRANT SELECT ON ALL TABLES IN SCHEMA ops TO stormops_ro'"
 
+# 这里必须 restart，不能用 enable --now。
+#
+# enable --now 的语义是"设为开机自启，如果没在跑就启动它"——
+# 服务已经在跑的时候它什么都不做。于是二进制换掉了、进程还留在旧的那份内存镜像里，
+# /proc/PID/exe 会显示 "(deleted)"。表现就是：部署脚本每一步都成功、md5 也对得上，
+# 但线上行为一点没变。这个坑在 WAF 规则那次已经踩过一次（见 PM-001），
+# 现在从流程上堵掉。
+restart_svc() {
+  systemctl enable "$1" >/dev/null 2>&1 || true
+  systemctl restart "$1"
+}
+
 say "7/9 启动监控组件"
-systemctl enable --now victoria-metrics.service
-systemctl enable --now alertmanager.service
-systemctl enable --now vmagent.service
-systemctl enable --now vmalert.service
+restart_svc victoria-metrics.service
+restart_svc alertmanager.service
+restart_svc vmagent.service
+restart_svc vmalert.service
 
 say "8/9 启动业务服务"
-systemctl enable --now stormsite.service
-systemctl enable --now stormops.service
+restart_svc stormsite.service
+restart_svc stormops.service
 sleep 2
-systemctl enable --now stormagent.service
+restart_svc stormagent.service
 
 say "9/9 配置 Nginx"
 if nginx -V 2>&1 | grep -q with-http_auth_request_module; then
@@ -89,5 +101,19 @@ echo
 echo "--- 状态 ---"
 for s in victoria-metrics vmagent vmalert alertmanager stormops stormagent stormsite nginx postgresql; do
   printf "%-20s %s\n" "$s" "$(systemctl is-active $s 2>/dev/null)"
+done
+
+# 最后一道防线：进程跑的是不是刚装上去的那份二进制。
+# 二进制被替换后，老进程的 /proc/PID/exe 会指向 "(deleted)"。
+# 只要这里报警，就说明"部署成功但线上行为没变"，必须重启对应服务。
+echo "--- 二进制校验 ---"
+for u in stormops stormagent stormsite victoria-metrics vmagent vmalert alertmanager; do
+  pid=$(systemctl show "$u" -p MainPID --value 2>/dev/null)
+  [ -z "$pid" ] && [ "$pid" != "0" ] && continue
+  link=$(readlink "/proc/$pid/exe" 2>/dev/null || true)
+  case "$link" in
+    *"(deleted)") echo "!! $u (pid $pid) 仍在运行已被替换的旧二进制，需要 restart" ;;
+    *)            echo "ok  $u" ;;
+  esac
 done
 free -m | head -2

@@ -3,11 +3,13 @@
   "dataFile": "/var/lib/stormops/state.json",
   "org": "影视飓风 · 媒体基建",
   "demo": true,
-
   "agents": [
-    { "name": "edge-01", "addr": "127.0.0.1", "token": "sops_CHANGE_ME_BEFORE_DEPLOY" }
+    {
+      "name": "edge-01",
+      "addr": "127.0.0.1",
+      "token": "sops_CHANGE_ME_BEFORE_DEPLOY"
+    }
   ],
-
   "assets": [
     {
       "id": "as_edge01",
@@ -19,7 +21,11 @@
       "cpuCores": 2,
       "memGb": 2,
       "diskGb": 40,
-      "tags": ["云主机", "网关", "首尔"],
+      "tags": [
+        "云主机",
+        "网关",
+        "首尔"
+      ],
       "status": "online"
     },
     {
@@ -32,7 +38,11 @@
       "cpuCores": 4,
       "memGb": 16,
       "diskGb": 20480,
-      "tags": ["素材库", "NAS", "无 agent"],
+      "tags": [
+        "素材库",
+        "NAS",
+        "无 agent"
+      ],
       "status": "pending"
     },
     {
@@ -45,7 +55,10 @@
       "cpuCores": 4,
       "memGb": 8,
       "diskGb": 200,
-      "tags": ["PostgreSQL", "主库"],
+      "tags": [
+        "PostgreSQL",
+        "主库"
+      ],
       "status": "pending"
     },
     {
@@ -58,32 +71,40 @@
       "cpuCores": 4,
       "memGb": 8,
       "diskGb": 80,
-      "tags": ["业务", "转码队列"],
+      "tags": [
+        "业务",
+        "转码队列"
+      ],
       "status": "pending"
     }
   ],
-
   "services": [
     {
       "name": "官网/课程站",
       "domain": "www.stormcrew-demo.cn",
-      "upstreams": ["127.0.0.1:8081"],
+      "upstreams": [
+        "127.0.0.1:8081"
+      ],
       "healthPath": "/healthz",
       "owner": "wangjingyu",
       "env": "prod",
-      "version": "v1.4.2"
+      "version": "v1.4.2",
+      "prefix": "/"
     },
     {
       "name": "StormOps 控制台",
       "domain": "ops.stormcrew-demo.cn",
-      "upstreams": ["127.0.0.1:8080"],
+      "upstreams": [
+        "127.0.0.1:8080"
+      ],
       "healthPath": "/api/v1/health",
       "owner": "wangjingyu",
       "env": "prod",
-      "version": "v0.9.0"
+      "version": "v0.9.0",
+      "prefix": "/ops/",
+      "skipWaf": true
     }
   ],
-
   "rules": [
     {
       "id": "R001",
@@ -146,7 +167,6 @@
       "enabled": true
     }
   ],
-
   "wafRules": [
     {
       "id": "W1001",
@@ -209,7 +229,6 @@
       "hits": 0
     }
   ],
-
   "capacity": {
     "volumes": [
       {
@@ -228,7 +247,6 @@
       }
     ]
   },
-
   "deploy": {
     "enabled": true,
     "dryRun": false,
@@ -242,7 +260,6 @@
       "rollback": "cp -a /opt/stormsite/bin/stormsite.prev /opt/stormsite/bin/stormsite && systemctl restart stormsite"
     }
   },
-
   "gateway": {
     "confPath": "/etc/nginx/conf.d/stormops.conf",
     "serverName": "_",
@@ -252,7 +269,6 @@
     "validateCmd": "nginx -t",
     "reloadCmd": "nginx -s reload"
   },
-
   "notify": {
     "feishuWebhook": "",
     "minSeverity": "warning"

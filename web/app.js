@@ -23,8 +23,23 @@ const app = {
 
 // ---------- 基础工具 ----------
 
+// 控制台有两种挂载方式：
+//   1. 直接访问 stormops（本地开发）—— 页面在 "/"
+//   2. 生产环境挂在 Nginx 的 "/ops/" 前缀后面
+// 所以接口地址不能写死成 "/api/v1/..."，否则在 /ops/ 下会打到业务站上，
+// 拿回一段 HTML 而不是 JSON（这个坑的真实表现是"整页无数据"）。
+const MOUNT = (() => {
+  let p = location.pathname;
+  if (!p.endsWith("/")) p = p.replace(/\/[^\/]*$/, "/");
+  return p;
+})();
+
+function apiURL(path) {
+  return MOUNT + String(path).replace(/^\//, "");
+}
+
 async function api(path, opt = {}) {
-  const res = await fetch(path, {
+  const res = await fetch(apiURL(path), {
     headers: { "Content-Type": "application/json" },
     ...opt,
     body: opt.body ? JSON.stringify(opt.body) : undefined,
