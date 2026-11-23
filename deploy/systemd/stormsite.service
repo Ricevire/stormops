@@ -1,0 +1,28 @@
+[Unit]
+Description=STORMCREW 演示业务站（StormOps 发布目标）
+Documentation=https://github.com/Ricevire/stormops
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stormsite
+Group=stormsite
+WorkingDirectory=/opt/stormsite
+ExecStart=/opt/stormsite/bin/stormsite -addr 127.0.0.1:8081
+Restart=always
+RestartSec=2
+StandardOutput=append:/var/log/stormsite/site.log
+StandardError=append:/var/log/stormsite/site.log
+
+# 以非 root 运行：这个服务是"业务"，跑在公网请求路径上，
+# 一旦被攻破，最少权限能把爆炸半径压到最小。
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/stormsite
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

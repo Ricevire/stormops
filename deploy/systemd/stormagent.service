@@ -1,0 +1,24 @@
+[Unit]
+Description=StormOps 节点采集代理
+Documentation=https://github.com/Ricevire/stormops
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/stormops/bin/stormagent -config /etc/stormops/agent.json
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/stormops/agent.log
+StandardError=append:/var/log/stormops/agent.log
+
+# agent 只读 /proc 与 df，权限要求很低，额外收紧一层
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+MemoryMax=96M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,260 @@
+{
+  "listen": "127.0.0.1:8080",
+  "dataFile": "/var/lib/stormops/state.json",
+  "org": "影视飓风 · 媒体基建",
+  "demo": true,
+
+  "agents": [
+    { "name": "edge-01", "addr": "127.0.0.1", "token": "sops_CHANGE_ME_BEFORE_DEPLOY" }
+  ],
+
+  "assets": [
+    {
+      "id": "as_edge01",
+      "hostname": "rainyun-edge-01",
+      "ip": "198.51.100.10",
+      "role": "edge",
+      "zone": "dmz",
+      "os": "Ubuntu 24.04 LTS",
+      "cpuCores": 2,
+      "memGb": 2,
+      "diskGb": 40,
+      "tags": ["云主机", "网关", "首尔"],
+      "status": "online"
+    },
+    {
+      "id": "as_nas01",
+      "hostname": "media-nas-01",
+      "ip": "192.168.10.20",
+      "role": "storage",
+      "zone": "prod",
+      "os": "TrueNAS SCALE",
+      "cpuCores": 4,
+      "memGb": 16,
+      "diskGb": 20480,
+      "tags": ["素材库", "NAS", "无 agent"],
+      "status": "pending"
+    },
+    {
+      "id": "as_db01",
+      "hostname": "media-db-01",
+      "ip": "192.168.10.31",
+      "role": "db",
+      "zone": "prod",
+      "os": "Ubuntu 22.04 LTS",
+      "cpuCores": 4,
+      "memGb": 8,
+      "diskGb": 200,
+      "tags": ["PostgreSQL", "主库"],
+      "status": "pending"
+    },
+    {
+      "id": "as_web01",
+      "hostname": "media-web-01",
+      "ip": "192.168.10.41",
+      "role": "web",
+      "zone": "prod",
+      "os": "Ubuntu 22.04 LTS",
+      "cpuCores": 4,
+      "memGb": 8,
+      "diskGb": 80,
+      "tags": ["业务", "转码队列"],
+      "status": "pending"
+    }
+  ],
+
+  "services": [
+    {
+      "name": "官网/课程站",
+      "domain": "www.stormcrew-demo.cn",
+      "upstreams": ["127.0.0.1:8081"],
+      "healthPath": "/healthz",
+      "owner": "wangjingyu",
+      "env": "prod",
+      "version": "v1.4.2"
+    },
+    {
+      "name": "StormOps 控制台",
+      "domain": "ops.stormcrew-demo.cn",
+      "upstreams": ["127.0.0.1:8080"],
+      "healthPath": "/api/v1/health",
+      "owner": "wangjingyu",
+      "env": "prod",
+      "version": "v0.9.0"
+    }
+  ],
+
+  "rules": [
+    {
+      "id": "R001",
+      "name": "CPU 使用率过高",
+      "metric": "cpu_pct",
+      "op": ">",
+      "threshold": 85,
+      "forSec": 120,
+      "severity": "critical",
+      "summary": "{{host}} CPU 使用率 {{value}}%，超过 85%",
+      "runbook": "docs/sop/SOP-02-alert.md#cpu",
+      "enabled": true
+    },
+    {
+      "id": "R002",
+      "name": "内存使用率过高",
+      "metric": "mem_used_pct",
+      "op": ">",
+      "threshold": 90,
+      "forSec": 180,
+      "severity": "warning",
+      "summary": "{{host}} 内存使用率 {{value}}%，存在 OOM 风险",
+      "runbook": "docs/sop/SOP-02-alert.md#memory",
+      "enabled": true
+    },
+    {
+      "id": "R003",
+      "name": "磁盘水位预警",
+      "metric": "disk_used_pct",
+      "op": ">",
+      "threshold": 85,
+      "forSec": 60,
+      "severity": "warning",
+      "summary": "{{host}} 磁盘水位 {{value}}%，需在写满前扩容",
+      "runbook": "docs/sop/SOP-02-alert.md#disk",
+      "enabled": true
+    },
+    {
+      "id": "R004",
+      "name": "服务不可用",
+      "metric": "svc_up",
+      "op": "<",
+      "threshold": 1,
+      "forSec": 60,
+      "severity": "critical",
+      "summary": "{{host}} 健康探测连续失败，已判定不可用",
+      "runbook": "docs/sop/SOP-02-alert.md#service",
+      "enabled": true
+    },
+    {
+      "id": "R005",
+      "name": "负载偏高",
+      "metric": "load1_per_core",
+      "op": ">",
+      "threshold": 1.5,
+      "forSec": 180,
+      "severity": "warning",
+      "summary": "{{host}} 单核负载 {{value}}，持续排队",
+      "runbook": "docs/sop/SOP-02-alert.md#load",
+      "enabled": true
+    }
+  ],
+
+  "wafRules": [
+    {
+      "id": "W1001",
+      "name": "SQL 注入特征",
+      "category": "sqli",
+      "target": "uri",
+      "pattern": "(union\\s+select|or\\s+1\\s*=\\s*1|'\\s*or\\s*')",
+      "action": "block",
+      "severity": "critical",
+      "enabled": true,
+      "rolloutPct": 100,
+      "hits": 0
+    },
+    {
+      "id": "W1002",
+      "name": "XSS 脚本注入",
+      "category": "xss",
+      "target": "args",
+      "pattern": "(<script|javascript:|onerror\\s*=|onload\\s*=)",
+      "action": "block",
+      "severity": "critical",
+      "enabled": true,
+      "rolloutPct": 100,
+      "hits": 0
+    },
+    {
+      "id": "W1003",
+      "name": "高危路径扫描",
+      "category": "scanner",
+      "target": "uri",
+      "pattern": "(wp-login\\.php|/\\.env|phpmyadmin|/\\.git/|/actuator/env)",
+      "action": "block",
+      "severity": "warning",
+      "enabled": true,
+      "rolloutPct": 100,
+      "hits": 0
+    },
+    {
+      "id": "W1004",
+      "name": "命令注入特征",
+      "category": "rce",
+      "target": "args",
+      "pattern": "(;\\s*(cat|ls|whoami|curl|wget|bash)\\b|\\|\\s*(nc|bash)\\b|\\$\\(.*\\))",
+      "action": "block",
+      "severity": "critical",
+      "enabled": true,
+      "rolloutPct": 100,
+      "hits": 0
+    },
+    {
+      "id": "W1005",
+      "name": "路径穿越",
+      "category": "custom",
+      "target": "args",
+      "pattern": "(\\.\\./|\\.\\.%2f|%2e%2e%2f)",
+      "action": "log",
+      "severity": "warning",
+      "enabled": true,
+      "rolloutPct": 100,
+      "hits": 0
+    }
+  ],
+
+  "capacity": {
+    "volumes": [
+      {
+        "name": "素材库",
+        "mount": "/mnt/materials",
+        "capacity": 20000000000000,
+        "warnPct": 75,
+        "critPct": 85
+      },
+      {
+        "name": "备份卷",
+        "mount": "/mnt/backup",
+        "capacity": 8000000000000,
+        "warnPct": 75,
+        "critPct": 90
+      }
+    ]
+  },
+
+  "deploy": {
+    "enabled": true,
+    "dryRun": false,
+    "releasesDir": "/opt/stormsite/releases",
+    "targetDir": "/opt/stormsite/stage",
+    "healthUrl": "http://127.0.0.1:8081/healthz",
+    "serviceTag": "stormsite",
+    "hooks": {
+      "backup": "cp -a /opt/stormsite/bin/stormsite /opt/stormsite/bin/stormsite.prev 2>/dev/null || true",
+      "switch": "install -m 0755 \"$STORMOPS_STAGE\" /opt/stormsite/bin/stormsite && systemctl restart stormsite",
+      "rollback": "cp -a /opt/stormsite/bin/stormsite.prev /opt/stormsite/bin/stormsite && systemctl restart stormsite"
+    }
+  },
+
+  "gateway": {
+    "confPath": "/etc/nginx/conf.d/stormops.conf",
+    "serverName": "_",
+    "listenPort": 80,
+    "upstreamPort": 8081,
+    "wafCheckUrl": "http://127.0.0.1:8080/internal/waf/check",
+    "validateCmd": "nginx -t",
+    "reloadCmd": "nginx -s reload"
+  },
+
+  "notify": {
+    "feishuWebhook": "",
+    "minSeverity": "warning"
+  }
+}

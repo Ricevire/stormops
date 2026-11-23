@@ -1,0 +1,18 @@
+[Unit]
+Description=StormOps 状态快照 → PostgreSQL 分析库
+Documentation=https://github.com/Ricevire/stormops
+After=network-online.target postgresql.service stormops.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/stormops/bin/load-pg.sh
+# 全量重载是幂等的，失败下一轮会重来；但如果一小时还跑不完，
+# 说明数据量已经超出这个方案的设计前提，宁可失败也不要挂着占资源。
+TimeoutStartSec=3600
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

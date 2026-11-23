@@ -1,0 +1,23 @@
+[Unit]
+Description=vmagent 指标抓取代理
+Documentation=https://docs.victoriametrics.com/vmagent/
+After=network-online.target victoria-metrics.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vmetrics
+Group=vmetrics
+ExecStart=/opt/stormops/bin/vmagent \
+  -promscrape.config=/etc/vmagent/scrape.yml \
+  -remoteWrite.url=http://127.0.0.1:8428/api/v1/write \
+  -httpListenAddr=127.0.0.1:8429 \
+  -remoteWrite.tmpDataPath=/var/lib/vmagent
+Restart=always
+RestartSec=5
+
+# 缓冲放在磁盘上：VM 短暂重启不会丢指标，这是本地磁盘比内存队列更值的地方。
+MemoryMax=160M
+
+[Install]
+WantedBy=multi-user.target

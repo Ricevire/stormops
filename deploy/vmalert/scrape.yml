@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+
+scrape_configs:
+  # StormOps 自身暴露的业务指标：主机 CPU/内存/磁盘、服务存活、告警数、WAF 拦截数。
+  # 这些指标是"平台视角"，与 StormOps 内部告警引擎共用同一份数据源，避免两套口径。
+  - job_name: stormops
+    static_configs:
+      - targets: ["127.0.0.1:8080"]
+        labels:
+          component: control-plane
+
+  # 监控组件自己也要被监控 —— 否则 VictoriaMetrics 挂了没人知道。
+  - job_name: victoriametrics
+    static_configs:
+      - targets: ["127.0.0.1:8428"]
+
+  - job_name: vmagent
+    static_configs:
+      - targets: ["127.0.0.1:8429"]
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["127.0.0.1:9093"]

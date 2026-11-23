@@ -1,0 +1,21 @@
+{
+  "serverUrl": "http://127.0.0.1:8080",
+  "token": "sops_CHANGE_ME_BEFORE_DEPLOY",
+  "interval": 15,
+  "probes": [
+    {
+      "name": "官网/课程站",
+      "url": "http://127.0.0.1:8081/healthz",
+      "timeout": 2000
+    },
+    {
+      "name": "StormOps 控制台",
+      "url": "http://127.0.0.1:8080/api/v1/health",
+      "timeout": 2000
+    }
+  ],
+  "labels": {
+    "env": "prod",
+    "region": "ap-northeast"
+  }
+}

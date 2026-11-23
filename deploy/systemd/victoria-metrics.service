@@ -1,0 +1,25 @@
+[Unit]
+Description=VictoriaMetrics 单机版时序数据库
+Documentation=https://docs.victoriametrics.com/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vmetrics
+Group=vmetrics
+ExecStart=/opt/stormops/bin/victoria-metrics \
+  -storageDataPath=/var/lib/victoriametrics \
+  -retentionPeriod=30d \
+  -httpListenAddr=127.0.0.1:8428 \
+  -memory.allowedPercent=40
+Restart=always
+RestartSec=5
+
+# 只监听 127.0.0.1：VM 没有内置鉴权，暴露到公网等于把全量指标送人。
+# 需要看面板就通过 SSH 隧道，或者在前面加一层带 basic auth 的 Nginx。
+MemoryMax=400M
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

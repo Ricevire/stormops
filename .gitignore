@@ -1,0 +1,19 @@
+# 构建与部署产物
+.deploy/
+*.tgz
+
+# 本地运行状态与截图
+.local/
+state.json
+state.json.bak
+*.png
+
+# SSH 私钥与主机指纹（绝不入库）
+.known_hosts
+*.pem
+id_*
+
+# 编辑器
+.vscode/
+.idea/
+*.swp

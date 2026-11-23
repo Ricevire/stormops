@@ -1,0 +1,14 @@
+# 默认按文本处理
+* text=auto
+
+# 这些文件会被 Linux 直接执行或解析，必须是 LF。
+# 一旦被 Windows 的 autocrlf 改成 CRLF，脚本会报 "$'\r': command not found"，
+# 而且报错信息完全看不出是换行符的问题。
+*.sh      text eol=lf
+*.service text eol=lf
+*.timer   text eol=lf
+*.yml     text eol=lf
+*.sql     text eol=lf
+*.go      text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf

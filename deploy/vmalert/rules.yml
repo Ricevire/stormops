@@ -1,0 +1,74 @@
+# vmalert 规则 —— 与 StormOps 内部规则引擎并行，两者互补：
+#   - StormOps 内部引擎：轻量、秒级、直接驱动控制台 UI，规则用 JSON 描述
+#   - vmalert：长周期、可回溯、告警可外发（飞书/钉钉），规则用 PromQL 描述
+# 规则口径必须一致，所以线上以 /api/v1/export/vmalert 导出的结果为准，
+# 本文件是导出结果的落地版本。
+
+groups:
+  - name: stormops-host
+    interval: 30s
+    rules:
+      - alert: HostCpuHigh
+        expr: stormops_host_cpu_pct > 85
+        for: 2m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "{{ $labels.host }} CPU 使用率 {{ $value }}%"
+          runbook: "docs/sop/SOP-02-alert.md#cpu"
+
+      - alert: HostMemoryHigh
+        expr: stormops_host_mem_pct > 90
+        for: 3m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "{{ $labels.host }} 内存使用率 {{ $value }}%，存在 OOM 风险"
+          runbook: "docs/sop/SOP-02-alert.md#memory"
+
+      - alert: HostDiskHigh
+        expr: stormops_host_disk_pct > 85
+        for: 2m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "{{ $labels.host }} 磁盘水位 {{ $value }}%"
+          runbook: "docs/sop/SOP-02-alert.md#disk"
+
+  - name: stormops-service
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: stormops_svc_up < 1
+        for: 1m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "服务 {{ $labels.service }} 健康探测失败"
+          runbook: "docs/sop/SOP-02-alert.md#service"
+
+  - name: stormops-self
+    interval: 30s
+    rules:
+      # 平台自身的"死亡开关"：StormOps 挂了，控制台看不见，只能靠这条告警兜底。
+      - alert: StormOpsDown
+        expr: up{job="stormops"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "StormOps 自身不可达，控制台与发布能力同时失效"
+
+      - alert: WAFBlockSpike
+        expr: sum(stormops_waf_blocked_24h) > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "24 小时 WAF 拦截量超过 500，建议确认是否遭受批量扫描"

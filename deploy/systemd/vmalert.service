@@ -1,0 +1,25 @@
+[Unit]
+Description=vmalert 规则评估
+Documentation=https://docs.victoriametrics.com/vmalert/
+After=network-online.target victoria-metrics.service alertmanager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vmetrics
+Group=vmetrics
+ExecStart=/opt/stormops/bin/vmalert \
+  -rule=/etc/vmalert/rules.yml \
+  -datasource.url=http://127.0.0.1:8428 \
+  -remoteRead.url=http://127.0.0.1:8428 \
+  -remoteWrite.url=http://127.0.0.1:8428 \
+  -notifier.url=http://127.0.0.1:9093 \
+  -httpListenAddr=127.0.0.1:8880 \
+  -evaluationInterval=30s
+Restart=always
+RestartSec=5
+
+MemoryMax=160M
+
+[Install]
+WantedBy=multi-user.target

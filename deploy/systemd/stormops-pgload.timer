@@ -1,0 +1,13 @@
+[Unit]
+Description=每天 03:20 重建 StormOps 分析库
+
+[Timer]
+# 选 03:20 是因为这是媒体业务最低谷：素材回传和转码任务基本停了，
+# 全量 TRUNCATE + COPY 不会和在线查询抢锁。
+OnCalendar=*-*-* 03:20:00
+# 机器重启错过了时间点也要补一次，否则分析库会一直是旧的。
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

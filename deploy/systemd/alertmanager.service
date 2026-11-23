@@ -1,0 +1,23 @@
+[Unit]
+Description=Alertmanager 告警路由与降噪
+Documentation=https://prometheus.io/docs/alerting/latest/alertmanager/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=alertmanager
+Group=alertmanager
+ExecStart=/opt/stormops/bin/alertmanager \
+  --config.file=/etc/alertmanager/alertmanager.yml \
+  --storage.path=/var/lib/alertmanager \
+  --web.listen-address=127.0.0.1:9093 \
+  --cluster.listen-address=
+Restart=always
+RestartSec=5
+
+# 单机部署，显式关掉 gossip 集群监听，避免它去监听 9094 造成端口困惑。
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target
