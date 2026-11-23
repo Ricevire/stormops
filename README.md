@@ -4,6 +4,10 @@
 
 > 这不是一个 demo 架子的 CRUD 后台。它的每条判据都在真实服务器上跑着，能被 `curl` 验证、能被 `systemctl` 观察、能被 SQL 复算。
 
+![控制台总览](docs/images/console-overview.png)
+
+<sub>总览页：集群负载（6 小时）、出口带宽、最近一次发布的七阶段进度、24 小时攻击来源 Top。</sub>
+
 ---
 
 ## 1. 它解决什么问题
