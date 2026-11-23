@@ -2,11 +2,10 @@
 .deploy/
 *.tgz
 
-# 本地运行状态与截图
+# 本地运行状态与截图（仓库里只保留 docs/images 下的正式配图）
 .local/
 state.json
 state.json.bak
-*.png
 
 # SSH 私钥与主机指纹（绝不入库）
 .known_hosts
